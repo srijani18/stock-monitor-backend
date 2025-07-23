@@ -29,7 +29,7 @@ __consumer_offsets 12 0
 __consumer_offsets 36 0
 __consumer_offsets 45 0
 __consumer_offsets 16 0
-stock-prices 0 3222
+stock-prices 0 5338
 __consumer_offsets 11 0
 __consumer_offsets 10 0
 __consumer_offsets 20 0
@@ -51,4 +51,4 @@ __consumer_offsets 38 0
 stock-monitor 0 1
 __consumer_offsets 34 0
 __consumer_offsets 9 0
-__consumer_offsets 14 2763
+__consumer_offsets 14 4891

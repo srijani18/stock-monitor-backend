@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/alerts")
+@CrossOrigin(origins = "http://localhost:3000")
 public class AlertController {
 
     private final AlertService alertService;
@@ -18,28 +19,29 @@ public class AlertController {
     }
 
     @PostMapping
-    public ResponseEntity<Alert> createAlert(@RequestBody Alert alert) {
-        return ResponseEntity.ok(alertService.createAlert(alert));
+    public Alert createAlert(@RequestBody Alert alert) {
+        return alertService.createAlert(alert);
     }
-
-    @GetMapping
-    public ResponseEntity<List<Alert>> getUserAlerts(Authentication auth) {
-        String userId = "testuser";
-        return ResponseEntity.ok(alertService.getAlertsByUser(userId));
-    }
-
 
     @PutMapping("/{id}")
-    public ResponseEntity<Alert> updateAlert(
-            @PathVariable Long id,
-            @RequestBody Alert updatedAlert) {
-        Alert updated = alertService.updateAlert(id, updatedAlert);
-        return ResponseEntity.ok(updated);
+    public Alert updateAlert(@PathVariable Long id, @RequestBody Alert alert) {
+        return alertService.updateAlert(id, alert);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteAlert(@PathVariable Long id) {
+    public void deleteAlert(@PathVariable Long id) {
         alertService.deleteAlert(id);
-        return ResponseEntity.noContent().build();
     }
+
+    @GetMapping
+    public List<Alert> getAllAlerts() {
+        return alertService.getAll(); // or alertService.getAlertsByUser(userId) if using auth
+    }
+
+    @PutMapping("/{id}/reset")
+    public Alert resetAlert(@PathVariable Long id) {
+        return alertService.resetAlert(id);
+    }
+
+
 }

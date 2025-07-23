@@ -3,8 +3,10 @@ package com.stock.demo.service.impl;
 import com.stock.demo.model.Alert;
 import com.stock.demo.repository.AlertRepository;
 import com.stock.demo.service.AlertService;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,13 +14,16 @@ import java.util.Optional;
 public class AlertServiceImpl implements AlertService {
 
     private final AlertRepository alertRepository;
-
-    public AlertServiceImpl(AlertRepository alertRepository) {
+    private final SimpMessagingTemplate messagingTemplate;
+    public AlertServiceImpl(AlertRepository alertRepository, SimpMessagingTemplate messagingTemplate) {
         this.alertRepository = alertRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
     public Alert createAlert(Alert alert) {
+        alert.setTriggered(false);
+        alert.setTriggeredAt(null);
         return alertRepository.save(alert);
     }
 
@@ -30,11 +35,10 @@ public class AlertServiceImpl implements AlertService {
             alert.setSymbol(updatedAlert.getSymbol());
             alert.setCondition(updatedAlert.getCondition());
             alert.setTargetPrice(updatedAlert.getTargetPrice());
-            alert.setTriggered(updatedAlert.isTriggered());
-            alert.setTriggeredAt(updatedAlert.getTriggeredAt());
+            // Don't update 'triggered' unless resetting
             return alertRepository.save(alert);
         } else {
-            throw new RuntimeException("Alert not found");
+            throw new RuntimeException("Alert not found with id: " + id);
         }
     }
 
@@ -43,7 +47,49 @@ public class AlertServiceImpl implements AlertService {
         alertRepository.deleteById(id);
     }
 
+    @Override
     public List<Alert> getAlertsByUser(String userId) {
         return alertRepository.findByUserId(userId);
     }
+
+    @Override
+    public List<Alert> getAll() {
+        return alertRepository.findAll();
+    }
+
+    @Override
+    public void checkAndTriggerAlerts(String symbol, double currentPrice) {
+        List<Alert> pending = alertRepository.findByTriggeredFalse();
+
+        for (Alert alert : pending) {
+            if (!alert.getSymbol().equalsIgnoreCase(symbol)) continue;
+
+            boolean shouldTrigger =
+                    (alert.getCondition().equals(">") && currentPrice > alert.getTargetPrice()) ||
+                            (alert.getCondition().equals("<") && currentPrice < alert.getTargetPrice());
+
+            if (shouldTrigger) {
+                alert.setTriggered(true);
+                alert.setTriggeredAt(LocalDateTime.now());
+                alertRepository.save(alert);
+                // (Optional) notify the user via WebSocket or email here
+
+
+                messagingTemplate.convertAndSend("/topic/alerts-triggered", alert);
+            }
+        }
+    }
+
+    @Override
+    public Alert resetAlert(Long id) {
+        Optional<Alert> optional = alertRepository.findById(id);
+        if (optional.isPresent()) {
+            Alert alert = optional.get();
+            alert.setTriggered(false);
+            alert.setTriggeredAt(null);
+            return alertRepository.save(alert);
+        }
+        throw new RuntimeException("Alert not found");
+    }
+
 }

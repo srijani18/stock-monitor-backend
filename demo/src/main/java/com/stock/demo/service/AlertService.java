@@ -12,4 +12,10 @@ public interface AlertService {
     void deleteAlert(Long id);
 
     List<Alert> getAlertsByUser(String userId);
+
+    List<Alert> getAll();  // Optional, for admin/debugging
+
+    void checkAndTriggerAlerts(String symbol, double currentPrice);
+
+    Alert resetAlert(Long id);
 }

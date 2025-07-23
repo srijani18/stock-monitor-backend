@@ -8,4 +8,6 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     //List<Alert> findByUsername(String username);
 
     List<Alert> findByUserId(String userId);
+
+    List<Alert> findByTriggeredFalse();
 }
